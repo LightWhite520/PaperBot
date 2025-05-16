@@ -4,23 +4,29 @@ import com.lightwhite.paperbot.bot.BotBuilder
 import com.lightwhite.paperbot.bot.PaperBot
 import com.lightwhite.paperbot.config.BotConfig
 import com.lightwhite.paperbot.logger
-import net.mamoe.mirai.contact.remarkOrNick
 import net.mamoe.mirai.event.events.GroupMessageEvent
+import net.mamoe.mirai.event.events.MemberJoinRequestEvent
 import net.mamoe.mirai.event.events.UserMessageEvent
 
 class MainBot(
-    private val bot: net.mamoe.mirai.Bot,
-    private val listenGroups: List<Long>
+    val bot: net.mamoe.mirai.Bot,
+    val listenGroups: List<Long>
 ): PaperBot("MainBot") {
     override suspend fun start() {
         bot.eventChannel.subscribeAlways<GroupMessageEvent> {
             if (listenGroups.contains(this.group.id)) {
-                logger.info("收到来自QQ群${this.group.id}的消息：${this.message}")
+//                logger.info("收到来自QQ群${this.group.id}的消息：${this.message}")
             }
         }
 
         bot.eventChannel.subscribeAlways<UserMessageEvent> {
-            logger.info("收到来自QQ好友${this.sender.remarkOrNick}的消息：${this.message}")
+//            logger.info("收到来自QQ好友${this.sender.remarkOrNick}的消息：${this.message}")
+        }
+
+        bot.eventChannel.subscribeAlways<MemberJoinRequestEvent> {
+            if (this.groupId in listenGroups) {
+                this.accept()
+            }
         }
     }
 

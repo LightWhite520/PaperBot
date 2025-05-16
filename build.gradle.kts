@@ -10,6 +10,10 @@ plugins {
 group = "com.lightwhite.paperbot"
 version = "1.0"
 
+application {
+    mainClass.set("com.lightwhite.paperbot.MainKt")
+}
+
 val library: Configuration by configurations.creating
 val library0 = configurations.named("library")
 

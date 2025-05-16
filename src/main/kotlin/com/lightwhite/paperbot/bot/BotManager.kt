@@ -4,7 +4,7 @@ import com.lightwhite.paperbot.bot.impl.MainBot
 import com.lightwhite.paperbot.config.BotConfig
 
 object BotManager {
-    private val botInstants = mutableListOf<PaperBot>()
+    val botInstants = mutableListOf<PaperBot>()
     private val builders = listOf(
         MainBot.Builder()
     )
