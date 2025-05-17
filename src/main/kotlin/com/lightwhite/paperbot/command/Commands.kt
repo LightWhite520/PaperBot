@@ -15,7 +15,6 @@ import net.mamoe.mirai.event.events.UserMessageEvent
 import net.mamoe.mirai.message.data.At
 import net.mamoe.mirai.message.data.Message
 import net.mamoe.mirai.message.data.buildMessageChain
-import org.slf4j.MarkerFactory
 import java.time.LocalTime
 
 object BanCommand : Command("ban") {
@@ -30,6 +29,11 @@ object BanCommand : Command("ban") {
                 if (user != null) {
                     BanManager.groupBannedUsers[event.group.id]?.add(userId)
                         ?: BanManager.groupBannedUsers.put(event.group.id, mutableListOf(userId))
+                    event.bot.groups.forEach { group ->
+                        if (group.botPermission.level >= 1) {
+                            user.kick("You are temporarily banned for 359d 23h 59m 59s from this server!")
+                        }
+                    }
                     return buildMessageChain { +"封禁成功" }
                 }
                 return buildMessageChain { +"用户不存在" }
@@ -44,6 +48,11 @@ object BanCommand : Command("ban") {
                 }
                 val userId = args[0].toLong()
                 BanManager.globalBannedUsers.add(userId)
+                event.bot.groups.forEach { group ->
+                    if (group.botPermission.level >= 1) {
+                        group.getMember(userId)?.kick("You are temporarily banned for 359d 23h 59m 59s from this server!")
+                    }
+                }
                 return buildMessageChain { +"封禁成功" }
             } else {
                 return buildMessageChain { +"权限不足" }

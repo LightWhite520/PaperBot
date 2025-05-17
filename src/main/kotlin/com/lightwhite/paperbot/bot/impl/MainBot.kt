@@ -6,6 +6,7 @@ import com.lightwhite.paperbot.config.launch.BotConfig
 import com.lightwhite.paperbot.lastCommand
 import com.lightwhite.paperbot.lastKey
 import com.lightwhite.paperbot.logger
+import com.lightwhite.paperbot.manager.BanManager
 import com.lightwhite.paperbot.service.CommandParser
 import com.lightwhite.paperbot.waiting
 import net.mamoe.mirai.event.events.GroupMessageEvent
@@ -44,6 +45,10 @@ class MainBot(
 
         bot.eventChannel.subscribeAlways<MemberJoinRequestEvent> {
             if (this.groupId in listenGroups) {
+                if (it.fromId in BanManager.groupBannedUsers || it.fromId in BanManager.globalBannedUsers) {
+                    this.reject()
+                    return@subscribeAlways
+                }
                 this.accept()
             }
         }
