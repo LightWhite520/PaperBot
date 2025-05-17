@@ -1,28 +1,17 @@
 package com.lightwhite.paperbot
 
-import com.lightwhite.paperbot.bot.BotManager
 import com.lightwhite.paperbot.bot.impl.MainBot
-import com.lightwhite.paperbot.config.Config
+import com.lightwhite.paperbot.manager.BotManager
+import com.lightwhite.paperbot.manager.ConfigManager
+import com.lightwhite.paperbot.utils.postAnnounce
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.encodeToString
-import net.mamoe.mirai.contact.announcement.OfflineAnnouncement
-import java.io.File
 import java.util.*
 import kotlin.system.exitProcess
 
 fun main(): Unit = runBlocking {
-    val configFile = File("config/config.json")
-    if (!configFile.exists()) {
-        val config = Config.default()
-        configFile.parentFile.mkdirs()
-        configFile.writeText(Serializer.encodeToString(config))
-        logger.error("第一次启动，请填写配置文件！")
-        return@runBlocking
-    }
-
-    val config = Serializer.decodeFromString<Config>(configFile.readText())
+    val config = ConfigManager.launchConfig
     awaitAll(
         *config.bots.map {
             async {
@@ -41,26 +30,43 @@ fun main(): Unit = runBlocking {
                 "announce" -> {
                     logger.info("请输入公告内容：")
                     val content = readln()
-                    BotManager.botInstants.forEach { bot ->
-                        (bot as MainBot).bot.groups.filter { it.id in bot.listenGroups }.forEach {
-                            println(it.name)
-                            if ((it.botPermission.level >= 1)) {
-                                runBlocking {
-                                    OfflineAnnouncement(content).publishTo(it)
-                                }
-                            }
-                        }
-                    }
+                    postAnnounce(
+                        content,
+                        *BotManager.botInstants.filterIsInstance<MainBot>().map { it.bot }.toTypedArray()
+                    )
                 }
 
                 "help" -> {
-                    logger.info("""
+                    logger.info(
+                        """
                         exit: 退出程序
                         announce: 发布公告
                         help: 帮助
-                    """.trimIndent())
+                        addadmin: 添加管理员
+                    """.trimIndent()
+                    )
+                }
+
+                "addadmin" -> {
+                    logger.info("请输入用户ID：")
+                    val id = readln().toLong()
+                    ConfigManager.adminConfig.adminIds.add(id)
+                    ConfigManager.saveConfig()
+                    logger.info("添加成功")
                 }
             }
         }
     }.start()
+
+    val timer = Timer()
+
+    timer.schedule(object : TimerTask() {
+        override fun run() = ConfigManager.saveConfig()
+    }, 5 * 60 * 1000, 5 * 60 * 1000)
+
+    val thread = Thread {
+        ConfigManager.saveConfig()
+    }
+
+    Runtime.getRuntime().addShutdownHook(thread)
 }

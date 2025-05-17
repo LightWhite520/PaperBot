@@ -1,7 +1,8 @@
-package com.lightwhite.paperbot.bot
+package com.lightwhite.paperbot.manager
 
+import com.lightwhite.paperbot.bot.PaperBot
 import com.lightwhite.paperbot.bot.impl.MainBot
-import com.lightwhite.paperbot.config.BotConfig
+import com.lightwhite.paperbot.config.launch.BotConfig
 
 object BotManager {
     val botInstants = mutableListOf<PaperBot>()

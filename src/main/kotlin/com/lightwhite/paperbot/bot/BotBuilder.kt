@@ -1,6 +1,6 @@
 package com.lightwhite.paperbot.bot
 
-import com.lightwhite.paperbot.config.BotConfig
+import com.lightwhite.paperbot.config.launch.BotConfig
 
 abstract class BotBuilder(private val clazz: Class<*>) {
     open fun isValidConfig(botConfig: BotConfig): Boolean {

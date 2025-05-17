@@ -2,25 +2,44 @@ package com.lightwhite.paperbot.bot.impl
 
 import com.lightwhite.paperbot.bot.BotBuilder
 import com.lightwhite.paperbot.bot.PaperBot
-import com.lightwhite.paperbot.config.BotConfig
+import com.lightwhite.paperbot.config.launch.BotConfig
+import com.lightwhite.paperbot.lastCommand
+import com.lightwhite.paperbot.lastKey
 import com.lightwhite.paperbot.logger
+import com.lightwhite.paperbot.service.CommandParser
+import com.lightwhite.paperbot.waiting
 import net.mamoe.mirai.event.events.GroupMessageEvent
 import net.mamoe.mirai.event.events.MemberJoinRequestEvent
-import net.mamoe.mirai.event.events.UserMessageEvent
+import net.mamoe.mirai.event.events.MessageEvent
+import net.mamoe.mirai.message.data.buildMessageChain
 
 class MainBot(
     val bot: net.mamoe.mirai.Bot,
     val listenGroups: List<Long>
-): PaperBot("MainBot") {
+) : PaperBot("MainBot") {
     override suspend fun start() {
-        bot.eventChannel.subscribeAlways<GroupMessageEvent> {
-            if (listenGroups.contains(this.group.id)) {
-//                logger.info("收到来自QQ群${this.group.id}的消息：${this.message}")
+        bot.eventChannel.subscribeAlways<MessageEvent> {
+            var rawMessage = it.message.contentToString()
+            if (waiting) {
+                waiting = false
+                if (lastKey == rawMessage.toInt()) {
+                    if (lastCommand != null) {
+                        it.subject.sendMessage(lastCommand!!.first.execute(lastCommand!!.second, it, true))
+                    }
+                } else {
+                    it.subject.sendMessage("动态秘钥错误")
+                }
+                lastCommand = null
+                lastKey = 0
+                return@subscribeAlways
             }
-        }
-
-        bot.eventChannel.subscribeAlways<UserMessageEvent> {
-//            logger.info("收到来自QQ好友${this.sender.remarkOrNick}的消息：${this.message}")
+            if (it is GroupMessageEvent) {
+                if (it.group.id !in listenGroups) return@subscribeAlways
+                if (!rawMessage.startsWith("@${bot.id} /")) return@subscribeAlways
+                rawMessage = rawMessage.substring(rawMessage.indexOf("/")).trim()
+            }
+            val (command, args) = CommandParser.parse(rawMessage)
+            it.subject.sendMessage(command?.execute(args, it) ?: buildMessageChain { +"未知命令" })
         }
 
         bot.eventChannel.subscribeAlways<MemberJoinRequestEvent> {

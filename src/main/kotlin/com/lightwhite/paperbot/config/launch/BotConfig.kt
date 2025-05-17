@@ -1,4 +1,4 @@
-package com.lightwhite.paperbot.config
+package com.lightwhite.paperbot.config.launch
 
 import kotlinx.serialization.Serializable
 
