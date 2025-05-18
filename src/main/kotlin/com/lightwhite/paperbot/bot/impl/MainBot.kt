@@ -49,7 +49,7 @@ class MainBot(
                     this.reject()
                     return@subscribeAlways
                 }
-                this.accept()
+//                this.accept()
             }
         }
     }
