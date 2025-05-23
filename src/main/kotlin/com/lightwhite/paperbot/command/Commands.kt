@@ -50,7 +50,8 @@ object BanCommand : Command("ban") {
                 BanManager.globalBannedUsers.add(userId)
                 event.bot.groups.forEach { group ->
                     if (group.botPermission.level >= 1) {
-                        group.getMember(userId)?.kick("You are temporarily banned for 359d 23h 59m 59s from this server!")
+                        group.getMember(userId)
+                            ?.kick("You are temporarily banned for 359d 23h 59m 59s from this server!")
                     }
                 }
                 return buildMessageChain { +"封禁成功" }
@@ -123,6 +124,7 @@ object AddAdminCommand : Command("addadmin") {
 
 
                     val response = """
+                        
                     $timeGreeting 终于找到主人啦喵！
                     $catAction
                     请多给小喵下达指令吧～ 
@@ -131,6 +133,7 @@ object AddAdminCommand : Command("addadmin") {
                     return buildMessageChain {
                         +"添加成功\n"
                         +At(user)
+                        +" "
                         +response
                     }
                 }
@@ -236,19 +239,19 @@ object AnnounceCommand : Command("announce") {
 object HelpCommand : Command("help") {
     override suspend fun execute(args: List<String>, event: MessageEvent, sudo: Boolean): Message {
         return buildMessageChain {
-            +"小喵的指令有："
-            +"1. /Help 显示本帮助"
-            +"2. /Ban [userId] 封禁用户"
-            +"3. /Unban [userId] 解封用户"
-            +"4. /AddAdmin [userId] 添加管理员"
-            +"5. /RemoveAdmin [userId] 移除管理员"
-            +"5. /Announce [message] 发送公告"
-            +"6. /Mass [message] 群发消息"
-            +"7. /Sudo [command] 切换为sudo模式执行命令"
-            +"====================================="
-            +"Copyright (c) 2025 LightWhite"
-            +"https://github.com/LightWhite520/PaperBot"
-            +"====================================="
+            +"小喵的指令有：\n"
+            +"1. /Help 显示本帮助\n"
+            +"2. /Ban [userId] 封禁用户\n"
+            +"3. /Unban [userId] 解封用户\n"
+            +"4. /AddAdmin [userId] 添加管理员\n"
+            +"5. /RemoveAdmin [userId] 移除管理员\n"
+            +"5. /Announce [message] 发送公告\n"
+            +"6. /Mass [message] 群发消息\n"
+            +"7. /Sudo [command] 切换为sudo模式执行命令\n"
+            +"==================\n"
+            +"Copyright (c) 2025 LightWhite\n"
+            +"https://github.com/LightWhite520/PaperBot\n"
+            +"==================\n"
         }
     }
 }
@@ -311,12 +314,14 @@ object SudoCommand : Command("sudo") {
             lastCommand = command to strings
             waiting = true
             lastKey = key
-            logger.info("""
+            logger.info(
+                """
                 
                 ==========================
                 动态秘钥: $lastKey
                 ==========================
-            """.trimIndent())
+            """.trimIndent()
+            )
             return buildMessageChain {
                 +"请输入动态秘钥"
             }
