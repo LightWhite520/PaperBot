@@ -1,18 +1,21 @@
 package com.lightwhite.paperbot.bot.impl
 
+import LightAppContactCard
+import com.lightwhite.paperbot.*
 import com.lightwhite.paperbot.bot.BotBuilder
 import com.lightwhite.paperbot.bot.PaperBot
 import com.lightwhite.paperbot.config.launch.BotConfig
-import com.lightwhite.paperbot.lastCommand
-import com.lightwhite.paperbot.lastKey
-import com.lightwhite.paperbot.logger
 import com.lightwhite.paperbot.manager.BanManager
+import com.lightwhite.paperbot.manager.VerifyManager
 import com.lightwhite.paperbot.service.CommandParser
-import com.lightwhite.paperbot.waiting
+import kotlinx.serialization.json.Json
 import net.mamoe.mirai.event.events.GroupMessageEvent
+import net.mamoe.mirai.event.events.MemberJoinEvent
 import net.mamoe.mirai.event.events.MemberJoinRequestEvent
 import net.mamoe.mirai.event.events.MessageEvent
+import net.mamoe.mirai.message.data.MessageSource.Key.recall
 import net.mamoe.mirai.message.data.buildMessageChain
+import net.mamoe.mirai.message.data.content
 
 class MainBot(
     val bot: net.mamoe.mirai.Bot,
@@ -21,7 +24,7 @@ class MainBot(
     override suspend fun start() {
         bot.eventChannel.subscribeAlways<MessageEvent> {
             var rawMessage = it.message.contentToString()
-            if (waiting) {
+            if (waiting && it.sender == invoker) {
                 waiting = false
                 if (lastKey == rawMessage.toInt()) {
                     if (lastCommand != null) {
@@ -32,10 +35,40 @@ class MainBot(
                 }
                 lastCommand = null
                 lastKey = 0
+                invoker = null
                 return@subscribeAlways
             }
+
+            if (it is GroupMessageEvent && VerifyManager.isVerifying(it.sender, it.group)) {
+                val code = try {
+                    rawMessage.toInt()
+                } catch (_: Exception) {
+                    -1
+                }
+                VerifyManager.verify(it.sender, it.group, code)
+            }
+
             if (it is GroupMessageEvent) {
                 if (it.group.id !in listenGroups) return@subscribeAlways
+                val content = it.message.content
+                if (content.isNotEmpty() && isJsonValid(content)) {
+                    try {
+                        val json = Json { ignoreUnknownKeys = true }
+                        val card = json.decodeFromString<LightAppContactCard>(content)
+
+                        if (card.view == "contact") {
+                            val contact = card.meta.contact
+                            logger.info("检测到群推荐卡片：${contact.nickname} - ${contact.tag}")
+                            logger.info("加群链接：${contact.jumpUrl}")
+
+                            BanManager.ban(it.sender)
+                            it.message.recall()
+                        }
+                    } catch (e: Exception) {
+                        logger.error("解析群推荐卡片失败", e)
+                    }
+                }
+
                 if (!rawMessage.startsWith("@${bot.id} /")) return@subscribeAlways
                 rawMessage = rawMessage.substring(rawMessage.indexOf("/")).trim()
             }
@@ -49,10 +82,27 @@ class MainBot(
                     this.reject()
                     return@subscribeAlways
                 }
-//                this.accept()
             }
         }
+
+        bot.eventChannel.subscribeAlways<MemberJoinEvent> {
+            if (this.groupId in listenGroups) VerifyManager.verify(it.user, it.group)
+        }
     }
+
+    private fun isJsonValid(jsonString: String): Boolean {
+        return try {
+            val element = Json.parseToJsonElement(jsonString)
+            when (element) {
+                is kotlinx.serialization.json.JsonObject,
+                is kotlinx.serialization.json.JsonArray -> true
+                else -> false
+            }
+        } catch (e: Exception) {
+            false
+        }
+    }
+
 
     class Builder : BotBuilder(BotConfig::class.java) {
         override suspend fun buildBot(config: BotConfig): PaperBot? {

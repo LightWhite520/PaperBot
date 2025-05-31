@@ -2,6 +2,7 @@ package com.lightwhite.paperbot
 
 import com.lightwhite.paperbot.command.Command
 import kotlinx.serialization.json.Json
+import net.mamoe.mirai.contact.User
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import kotlin.random.Random
@@ -23,3 +24,5 @@ val key
 var lastKey = 0
 
 var lastCommand: Pair<Command, List<String>>? = null
+
+var invoker: User? = null

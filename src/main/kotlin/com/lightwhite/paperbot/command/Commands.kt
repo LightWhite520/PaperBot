@@ -27,13 +27,7 @@ object BanCommand : Command("ban") {
                 val userId = args[0].toLong()
                 val user = event.group.getMember(userId)
                 if (user != null) {
-                    BanManager.groupBannedUsers[event.group.id]?.add(userId)
-                        ?: BanManager.groupBannedUsers.put(event.group.id, mutableListOf(userId))
-                    event.bot.groups.forEach { group ->
-                        if (group.botPermission.level >= 1) {
-                            user.kick("You are temporarily banned for 359d 23h 59m 59s from this server!")
-                        }
-                    }
+                    BanManager.ban(user, event.group)
                     return buildMessageChain { +"封禁成功" }
                 }
                 return buildMessageChain { +"用户不存在" }
@@ -47,13 +41,7 @@ object BanCommand : Command("ban") {
                     return buildMessageChain { +"缺少参数" }
                 }
                 val userId = args[0].toLong()
-                BanManager.globalBannedUsers.add(userId)
-                event.bot.groups.forEach { group ->
-                    if (group.botPermission.level >= 1) {
-                        group.getMember(userId)
-                            ?.kick("You are temporarily banned for 359d 23h 59m 59s from this server!")
-                    }
-                }
+                BanManager.ban(userId)
                 return buildMessageChain { +"封禁成功" }
             } else {
                 return buildMessageChain { +"权限不足" }
@@ -311,6 +299,7 @@ object SudoCommand : Command("sudo") {
                     +"未知命令"
                 }
             }
+            invoker = event.sender
             lastCommand = command to strings
             waiting = true
             lastKey = key
