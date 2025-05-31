@@ -1,5 +1,6 @@
 package com.lightwhite.paperbot.manager
 
+import com.lightwhite.paperbot.logger
 import com.lightwhite.paperbot.service.Verify
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -21,12 +22,13 @@ object VerifyManager {
         verifyingUsers[pair] = verify
         GlobalScope.launch {
             while (true) {
-                if (!verifyingUsers.containsKey(pair)) break
+                if (!verifyingUsers.containsKey(pair)) return@launch
                 if (System.currentTimeMillis() > verify.expireTime) {
                     verifyingUsers.remove(pair)
-                    group.getMember(user.id)?.kick("验证码过期, 已踢出")
+                    group.getMember(user.id)?.kick("验证码过期, 已踢出") ?: return@launch
                     group.sendMessage("验证码过期, 已踢出")
-                    break
+                    logger.info("已踢出$user")
+                    return@launch
                 }
                 delay(1000)
             }
