@@ -45,7 +45,9 @@ class MainBot(
                 } catch (_: Exception) {
                     -1
                 }
-                VerifyManager.verify(it.sender, it.group, code)
+                if (!VerifyManager.verify(it.sender, it.group, code)) {
+                    it.message.recall()
+                }
             }
 
             if (it is GroupMessageEvent) {

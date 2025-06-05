@@ -8,7 +8,7 @@ import net.mamoe.mirai.message.data.sendTo
 
 class Verify(val user: User) {
     private val verifyCode = (100000..999999).random()
-    val expireTime = System.currentTimeMillis() + 6 * 1000 * 1000
+    val expireTime = System.currentTimeMillis() + 6 * 1000 * 10
     suspend fun sendVerifyCode(group: Group) {
         buildMessageChain {
             +At(user)

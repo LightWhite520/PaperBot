@@ -35,14 +35,16 @@ object VerifyManager {
         }
     }
 
-    suspend fun verify(user: User, group: Group, code: Int) {
-        val verify = verifyingUsers[Pair(user, group)] ?: return
+    suspend fun verify(user: User, group: Group, code: Int): Boolean {
+        val verify = verifyingUsers[Pair(user, group)] ?: return false
         if (verify.verify(code)) {
             verifyingUsers.remove(Pair(user, group))
             group.sendMessage("验证通过")
+            return true
         } else {
             group.getMember(user.id)?.kick("验证码错误, 已踢出")
-            group.sendMessage("验证码错误")
+            group.sendMessage("验证码错误, 已踢出")
+            return false
         }
     }
 }
